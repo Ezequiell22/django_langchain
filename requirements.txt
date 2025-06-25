@@ -1,0 +1,27 @@
+# Django e REST Framework
+Django>=4.2
+djangorestframework
+
+# Langchain e dependências
+langchain>=0.1.14
+langchain-community>=0.0.30
+
+# OpenAI LLMs e embeddings
+openai>=1.0.0
+
+# Vetorização FAISS
+faiss-cpu>=1.7.4
+
+# Embeddings
+tiktoken
+sentence-transformers
+
+# Conexão com SQL Server via ODBC
+pyodbc
+sqlalchemy>=2.0.0
+
+# Carregamento de variáveis de ambiente
+python-dotenv
+
+# Outros
+requests
