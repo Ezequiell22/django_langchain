@@ -1,16 +1,18 @@
-# agent_setup.py
+import os
+from dotenv import load_dotenv, find_dotenv
+from urllib.parse import quote_plus
+
 from langchain_community.utilities import SQLDatabase
 from langchain_community.chat_models import ChatOpenAI
-from langchain_community.agent_toolkits.sql.base import create_sql_agent
-from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
+from langchain_community.agent_toolkits.sql.base import create_sql_agent
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.docstore.document import Document
 from langchain.agents.agent_types import AgentType
-from dotenv import load_dotenv, find_dotenv
-from urllib.parse import quote_plus
-import os
+from langchain.prompts import ChatPromptTemplate
+from langchain.chains import LLMChain
 
 load_dotenv(find_dotenv())
 
@@ -25,7 +27,6 @@ odbc_str = (
 quoted = quote_plus(odbc_str)
 connection_string = f"mssql+pyodbc:///?odbc_connect={quoted}"
 
-# Setup DB + LLM + Agent
 db = SQLDatabase.from_uri(
     connection_string,
     include_tables=["SE1010", "SB1010", "SA1010", "SD1010", "SF2010", "SF1010", "SE2010"],
@@ -33,7 +34,7 @@ db = SQLDatabase.from_uri(
     sample_rows_in_table_info=0
 )
 
-llm = ChatOpenAI(temperature=0, model="gpt-4o") 
+llm = ChatOpenAI(temperature=0, model="gpt-4o")
 
 sql_agent = create_sql_agent(
     llm=llm,
@@ -51,6 +52,17 @@ Tabela SF1010: Cabeçalho das notas fiscais, contendo data, número da nota, cli
 Tabela SF2010: Itens das notas fiscais, com produto, quantidade, valor unitário e total.
 Tabela SE2010: Conhecimentos de transporte, com dados sobre o frete, transportadora e destinatário.
 """
-
 documents = CharacterTextSplitter(chunk_size=1000).split_documents([Document(page_content=schema_docs)])
 vectorstore = FAISS.from_documents(documents, OpenAIEmbeddings())
+
+analista_prompt = ChatPromptTemplate.from_messages([
+    ("system", "Você é um analista financeiro. Analise os dados abaixo e gere um relatório textual com insights. "
+               "Use linguagem profissional. Identifique totais, agrupamentos, padrões, tendências ou anomalias."),
+    ("user", "Pergunta original: {pergunta}\n\nDados retornados:\n{dados}")
+])
+
+analista_financeiro_chain = LLMChain(
+    llm=llm,
+    prompt=analista_prompt,
+    verbose=True
+)
