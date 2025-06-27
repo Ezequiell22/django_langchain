@@ -40,7 +40,7 @@ sql_agent = create_sql_agent(
     llm=llm,
     toolkit=SQLDatabaseToolkit(db=db, llm=llm),
     agent_type=AgentType.OPENAI_FUNCTIONS,
-    verbose=True
+    verbose=False
 )
 
 schema_docs = """
@@ -56,13 +56,14 @@ documents = CharacterTextSplitter(chunk_size=1000).split_documents([Document(pag
 vectorstore = FAISS.from_documents(documents, OpenAIEmbeddings())
 
 analista_prompt = ChatPromptTemplate.from_messages([
-    ("system", "Você é um analista financeiro. Analise os dados abaixo e gere um relatório textual com insights. "
-               "Use linguagem profissional. Identifique totais, agrupamentos, padrões, tendências ou anomalias."),
+    ("system", "Você é um analista financeiro. Analise os dados abaixo e gere um relatório textual "
+               "Use linguagem profissional. Identifique totais, agrupamentos, padrões ou anomalias."
+               "Seja breve e monte uma resposta resumida."),
     ("user", "Pergunta original: {pergunta}\n\nDados retornados:\n{dados}")
 ])
 
 analista_financeiro_chain = LLMChain(
     llm=llm,
     prompt=analista_prompt,
-    verbose=True
+    verbose=False
 )
